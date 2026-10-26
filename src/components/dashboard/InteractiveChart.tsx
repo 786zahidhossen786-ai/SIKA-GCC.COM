@@ -4,7 +4,7 @@ import { formatCurrency, GranularBucket } from '../../utils/analytics';
 import { BarChart3, TrendingUp } from 'lucide-react';
 
 export const InteractiveChart: React.FC = () => {
-  const { granularBuckets, selectedPeriod } = useFinancialData();
+  const { granularBuckets, selectedPeriod, currency } = useFinancialData();
   const [activeBucket, setActiveBucket] = useState<GranularBucket | null>(null);
   const [chartMode, setChartMode] = useState<'bars' | 'net'>('bars');
 
@@ -93,13 +93,13 @@ export const InteractiveChart: React.FC = () => {
               Interval: <strong className="text-white">{activeBucket.label}</strong>
             </span>
             <span className="text-emerald-400">
-              Rev: {formatCurrency(activeBucket.revenue)}
+              Rev: {formatCurrency(activeBucket.revenue, false, currency)}
             </span>
             <span className="text-rose-400">
-              Exp: {formatCurrency(activeBucket.expenses)}
+              Exp: {formatCurrency(activeBucket.expenses, false, currency)}
             </span>
             <span className={activeBucket.netProfit >= 0 ? 'text-sky-400' : 'text-amber-400'}>
-              Net: {formatCurrency(activeBucket.netProfit)}
+              Net: {formatCurrency(activeBucket.netProfit, false, currency)}
             </span>
           </div>
         ) : (

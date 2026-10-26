@@ -44,9 +44,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight text-white leading-none">
-              Vantage Analytics
+              SIKA GCC Analytics
             </h1>
-            <p className="text-[11px] text-slate-500 mt-1 font-mono">Growth & P&L Suite</p>
+            <p className="text-[11px] text-slate-500 mt-1 font-mono">Commercial Growth & P&L</p>
           </div>
         </div>
         {mobileOpen && (
@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
           <span>Restore Demo Data</span>
         </button>
         <div className="mt-2 text-center text-[10px] text-slate-600">
-          Vantage Financial v2026.1
+          SIKA GCC Commercial v2026.1
         </div>
       </div>
     </div>

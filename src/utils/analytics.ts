@@ -147,22 +147,46 @@ export function parseDateComponents(dateStr: string): { year: number; month: num
   return { year, month, day };
 }
 
+export type SupportedCurrency = 'AED' | 'SAR' | 'USD' | 'QAR' | 'KWD' | 'EUR' | 'BDT';
+
 /**
- * Format a number as currency USD ($X,XXX.XX).
+ * Format a number as currency (default AED for GCC operations, customizable to USD/SAR/etc).
  */
-export function formatCurrency(amount: number, compact: boolean = false): string {
+export function formatCurrency(
+  amount: number,
+  compact: boolean = false,
+  currencyCode: SupportedCurrency | string = 'AED'
+): string {
+  const symbolMap: Record<string, string> = {
+    AED: 'AED',
+    SAR: 'SAR',
+    USD: '$',
+    QAR: 'QAR',
+    KWD: 'KWD',
+    EUR: '€',
+    BDT: '৳',
+  };
+
+  const symbol = symbolMap[currencyCode] || currencyCode;
+
   if (compact && Math.abs(amount) >= 1_000_000) {
-    return `$${(amount / 1_000_000).toFixed(1)}M`;
+    return `${symbol} ${(amount / 1_000_000).toFixed(1)}M`;
   }
   if (compact && Math.abs(amount) >= 1_000) {
-    return `$${(amount / 1_000).toFixed(1)}k`;
+    return `${symbol} ${(amount / 1_000).toFixed(1)}k`;
   }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${symbol} ${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
 }
 
 /**

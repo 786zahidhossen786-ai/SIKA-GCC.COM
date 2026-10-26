@@ -21,7 +21,7 @@ interface OverviewViewProps {
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenAddModal }) => {
-  const { selectedPeriod, setSelectedPeriod, filteredTransactions, setActiveTab, specialAllocations } = useFinancialData();
+  const { selectedPeriod, setSelectedPeriod, filteredTransactions, setActiveTab, specialAllocations, currency } = useFinancialData();
 
   const periods: { id: TimePeriod; label: string }[] = [
     { id: 'daily', label: 'Daily' },
@@ -85,7 +85,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenAddModal }) =>
               <Heart className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <div className="text-lg sm:text-xl font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.sadaqah)}
+              {formatCurrency(specialAllocations.sadaqah, false, currency)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">Corporate & community welfare</p>
           </div>
@@ -97,7 +97,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenAddModal }) =>
               <Gift className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <div className="text-lg sm:text-xl font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.gifts)}
+              {formatCurrency(specialAllocations.gifts, false, currency)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">Appreciation & honorariums</p>
           </div>
@@ -109,7 +109,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenAddModal }) =>
               <Tag className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <div className="text-lg sm:text-xl font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.discounts)}
+              {formatCurrency(specialAllocations.discounts, false, currency)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">Salesman concessions & rebates</p>
           </div>
@@ -121,7 +121,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenAddModal }) =>
               <Coffee className="w-3.5 h-3.5 text-sky-400" />
             </div>
             <div className="text-lg sm:text-xl font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.dailyExpenses)}
+              {formatCurrency(specialAllocations.dailyExpenses, false, currency)}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">Workers daily petty cash & supplies</p>
           </div>
@@ -186,7 +186,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onOpenAddModal }) =>
                   <td className="py-2.5 px-3 text-slate-400 text-[11px]">{t.recordedBy || 'Staff'}</td>
                   <td className="py-2.5 px-3 text-right font-mono-numbers font-semibold">
                     <span className={t.type === 'revenue' ? 'text-emerald-400' : 'text-slate-200'}>
-                      {t.type === 'revenue' ? '+' : '-'}{formatCurrency(t.amount)}
+                      {t.type === 'revenue' ? '+' : '-'}{formatCurrency(t.amount, false, currency)}
                     </span>
                   </td>
                   <td className="py-2.5 px-3 text-right">

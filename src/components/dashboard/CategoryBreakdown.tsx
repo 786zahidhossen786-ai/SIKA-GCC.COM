@@ -4,7 +4,7 @@ import { formatCurrency } from '../../utils/analytics';
 import { PieChart, ArrowUpRight } from 'lucide-react';
 
 export const CategoryBreakdown: React.FC = () => {
-  const { revenueCategories, expenseCategories, selectedPeriod } = useFinancialData();
+  const { revenueCategories, expenseCategories, selectedPeriod, currency } = useFinancialData();
   const [activeType, setActiveType] = useState<'revenue' | 'expense'>('revenue');
 
   const categories = activeType === 'revenue' ? revenueCategories : expenseCategories;
@@ -65,7 +65,7 @@ export const CategoryBreakdown: React.FC = () => {
                   </span>
                   <div className="flex items-center gap-2 font-mono-numbers">
                     <span className="font-semibold text-slate-300">
-                      {formatCurrency(cat.amount)}
+                      {formatCurrency(cat.amount, false, currency)}
                     </span>
                     <span className="text-[11px] text-slate-500">
                       {cat.percentage}%

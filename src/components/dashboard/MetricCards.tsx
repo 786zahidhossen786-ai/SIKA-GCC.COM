@@ -4,7 +4,7 @@ import { formatCurrency } from '../../utils/analytics';
 import { TrendingUp, TrendingDown, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, Layers } from 'lucide-react';
 
 export const MetricCards: React.FC = () => {
-  const { summary, revenueGrowth, expenseGrowth, profitGrowth, selectedPeriod, previousSummary } = useFinancialData();
+  const { summary, revenueGrowth, expenseGrowth, profitGrowth, selectedPeriod, previousSummary, currency } = useFinancialData();
 
   const periodLabels: Record<string, string> = {
     daily: 'vs yesterday',
@@ -31,7 +31,7 @@ export const MetricCards: React.FC = () => {
 
         <div className="mt-3">
           <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-mono-numbers">
-            {formatCurrency(summary.totalRevenue)}
+            {formatCurrency(summary.totalRevenue, false, currency)}
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export const MetricCards: React.FC = () => {
 
         <div className="mt-3">
           <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-mono-numbers">
-            {formatCurrency(summary.totalExpenses)}
+            {formatCurrency(summary.totalExpenses, false, currency)}
           </div>
         </div>
 
@@ -113,7 +113,7 @@ export const MetricCards: React.FC = () => {
           <div className={`text-2xl sm:text-3xl font-bold tracking-tight font-mono-numbers ${
             summary.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'
           }`}>
-            {formatCurrency(summary.netProfit)}
+            {formatCurrency(summary.netProfit, false, currency)}
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export const MetricCards: React.FC = () => {
             <span className="text-slate-500 ml-1">{periodLabel}</span>
           </div>
           <span className="text-slate-400 font-medium font-mono-numbers">
-            Prev: {formatCurrency(previousSummary.netProfit, true)}
+            Prev: {formatCurrency(previousSummary.netProfit, true, currency)}
           </span>
         </div>
       </div>
@@ -153,7 +153,7 @@ export const MetricCards: React.FC = () => {
         <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
           <span className="text-slate-500">Unsettled / Pending:</span>
           <span className="text-amber-400 font-semibold font-mono-numbers">
-            {formatCurrency(summary.pendingAmount)}
+            {formatCurrency(summary.pendingAmount, false, currency)}
           </span>
         </div>
       </div>

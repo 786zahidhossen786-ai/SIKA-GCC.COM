@@ -5,7 +5,7 @@ import { formatCurrency } from '../../utils/analytics';
 import { Target, AlertCircle, CheckCircle2, Edit3, X } from 'lucide-react';
 
 export const BudgetGoalCard: React.FC = () => {
-  const { goal, updateGoal, summary } = useFinancialData();
+  const { goal, updateGoal, summary, currency } = useFinancialData();
   const { canEditGoals } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [targetRevInput, setTargetRevInput] = useState(goal.targetRevenue.toString());
@@ -103,7 +103,7 @@ export const BudgetGoalCard: React.FC = () => {
               <div className="flex items-center justify-between text-xs mb-1.5">
                 <span className="text-slate-300 font-medium">Revenue Target</span>
                 <span className="font-mono-numbers text-slate-400">
-                  <strong className="text-white">{formatCurrency(summary.totalRevenue, true)}</strong> / {formatCurrency(goal.targetRevenue, true)}
+                  <strong className="text-white">{formatCurrency(summary.totalRevenue, true, currency)}</strong> / {formatCurrency(goal.targetRevenue, true, currency)}
                 </span>
               </div>
               <div className="w-full h-2 bg-slate-850 rounded-full overflow-hidden">
@@ -114,7 +114,7 @@ export const BudgetGoalCard: React.FC = () => {
               </div>
               <div className="flex items-center justify-between text-[11px] mt-1 text-slate-500">
                 <span>{revProgress}% achieved</span>
-                <span>Remaining: {formatCurrency(Math.max(goal.targetRevenue - summary.totalRevenue, 0), true)}</span>
+                <span>Remaining: {formatCurrency(Math.max(goal.targetRevenue - summary.totalRevenue, 0), true, currency)}</span>
               </div>
             </div>
 
@@ -124,8 +124,8 @@ export const BudgetGoalCard: React.FC = () => {
                 <span className="text-slate-300 font-medium">Expense Budget Ceiling</span>
                 <span className="font-mono-numbers text-slate-400">
                   <strong className={isOverBudget ? 'text-rose-400' : 'text-slate-200'}>
-                    {formatCurrency(summary.totalExpenses, true)}
-                  </strong> / {formatCurrency(goal.maxExpenseBudget, true)}
+                    {formatCurrency(summary.totalExpenses, true, currency)}
+                  </strong> / {formatCurrency(goal.maxExpenseBudget, true, currency)}
                 </span>
               </div>
               <div className="w-full h-2 bg-slate-850 rounded-full overflow-hidden">
@@ -141,7 +141,7 @@ export const BudgetGoalCard: React.FC = () => {
                   {expBurnPercentage}% utilized
                 </span>
                 <span className="text-slate-500">
-                  {isOverBudget ? 'Over Budget' : `Buffer: ${formatCurrency(goal.maxExpenseBudget - summary.totalExpenses, true)}`}
+                  {isOverBudget ? 'Over Budget' : `Buffer: ${formatCurrency(goal.maxExpenseBudget - summary.totalExpenses, true, currency)}`}
                 </span>
               </div>
             </div>

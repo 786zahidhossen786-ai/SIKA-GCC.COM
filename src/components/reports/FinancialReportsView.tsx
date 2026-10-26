@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 export const FinancialReportsView: React.FC = () => {
-  const { transactions } = useFinancialData();
+  const { transactions, currency } = useFinancialData();
   const [reportCadence, setReportCadence] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [copied, setCopied] = useState(false);
 
@@ -93,12 +93,12 @@ export const FinancialReportsView: React.FC = () => {
   };
 
   const handleCopySummary = () => {
-    const text = `📊 Vantage Financial Report (${reportCadence.toUpperCase()} - 2026)
-Total Revenue: ${formatCurrency(currentData.summary.totalRevenue)} (${revGrowth >= 0 ? '+' : ''}${revGrowth}% vs prev)
-Total Expenses: ${formatCurrency(currentData.summary.totalExpenses)} (${expGrowth >= 0 ? '+' : ''}${expGrowth}% vs prev)
-Net Profit: ${formatCurrency(currentData.summary.netProfit)} (Margin: ${currentData.summary.profitMargin}%)
+    const text = `📊 SIKA GCC Commercial Financial Report (${reportCadence.toUpperCase()} - 2026)
+Total Revenue: ${formatCurrency(currentData.summary.totalRevenue, false, currency)} (${revGrowth >= 0 ? '+' : ''}${revGrowth}% vs prev)
+Total Expenses: ${formatCurrency(currentData.summary.totalExpenses, false, currency)} (${expGrowth >= 0 ? '+' : ''}${expGrowth}% vs prev)
+Net Profit: ${formatCurrency(currentData.summary.netProfit, false, currency)} (Margin: ${currentData.summary.profitMargin}%)
 Transactions: ${currentData.summary.revenueCount} Revenue / ${currentData.summary.expenseCount} Expenses
-Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
+Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount, false, currency)}`;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -164,7 +164,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
             Period Gross Revenue
           </span>
           <div className="text-2xl font-bold text-white mt-1 font-mono-numbers">
-            {formatCurrency(currentData.summary.totalRevenue)}
+            {formatCurrency(currentData.summary.totalRevenue, false, currency)}
           </div>
           <div className="mt-2 text-xs flex items-center gap-1">
             {revGrowth >= 0 ? (
@@ -185,7 +185,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
             Operating Expenses
           </span>
           <div className="text-2xl font-bold text-white mt-1 font-mono-numbers">
-            {formatCurrency(currentData.summary.totalExpenses)}
+            {formatCurrency(currentData.summary.totalExpenses, false, currency)}
           </div>
           <div className="mt-2 text-xs flex items-center gap-1">
             <span className="text-slate-400 font-mono-numbers">
@@ -202,7 +202,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
           <div className={`text-2xl font-bold mt-1 font-mono-numbers ${
             currentData.summary.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'
           }`}>
-            {formatCurrency(currentData.summary.netProfit)}
+            {formatCurrency(currentData.summary.netProfit, false, currency)}
           </div>
           <div className="mt-2 text-xs text-slate-400 font-mono-numbers">
             Margin: <strong className="text-white">{currentData.summary.profitMargin}%</strong>
@@ -217,7 +217,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
             {currentData.transactions.length}
           </div>
           <div className="mt-2 text-xs text-amber-400 font-mono-numbers">
-            Pending: {formatCurrency(currentData.summary.pendingAmount)}
+            Pending: {formatCurrency(currentData.summary.pendingAmount, false, currency)}
           </div>
         </div>
       </div>
@@ -234,7 +234,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
               <Heart className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <div className="text-lg font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.sadaqah)}
+              {formatCurrency(specialAllocations.sadaqah, false, currency)}
             </div>
           </div>
           <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg">
@@ -243,7 +243,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
               <Gift className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <div className="text-lg font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.gifts)}
+              {formatCurrency(specialAllocations.gifts, false, currency)}
             </div>
           </div>
           <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg">
@@ -252,7 +252,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
               <Tag className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <div className="text-lg font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.discounts)}
+              {formatCurrency(specialAllocations.discounts, false, currency)}
             </div>
           </div>
           <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg">
@@ -261,7 +261,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
               <Coffee className="w-3.5 h-3.5 text-sky-400" />
             </div>
             <div className="text-lg font-bold text-white font-mono-numbers">
-              {formatCurrency(specialAllocations.dailyExpenses)}
+              {formatCurrency(specialAllocations.dailyExpenses, false, currency)}
             </div>
           </div>
         </div>
@@ -306,7 +306,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
                   <td className="py-2 px-3 text-center text-slate-400">{c.count}</td>
                   <td className="py-2 px-3 text-right text-slate-400">{c.percentage}%</td>
                   <td className="py-2 px-3 text-right font-medium text-emerald-400">
-                    +{formatCurrency(c.amount)}
+                    +{formatCurrency(c.amount, false, currency)}
                   </td>
                 </tr>
               ))}
@@ -315,7 +315,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
                 <td className="py-2.5 px-3 text-center">{currentData.summary.revenueCount}</td>
                 <td className="py-2.5 px-3 text-right">100.0%</td>
                 <td className="py-2.5 px-3 text-right text-emerald-400">
-                  {formatCurrency(currentData.summary.totalRevenue)}
+                  {formatCurrency(currentData.summary.totalRevenue, false, currency)}
                 </td>
               </tr>
 
@@ -331,7 +331,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
                   <td className="py-2 px-3 text-center text-slate-400">{c.count}</td>
                   <td className="py-2 px-3 text-right text-slate-400">{c.percentage}%</td>
                   <td className="py-2 px-3 text-right font-medium text-rose-400">
-                    -{formatCurrency(c.amount)}
+                    -{formatCurrency(c.amount, false, currency)}
                   </td>
                 </tr>
               ))}
@@ -340,7 +340,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
                 <td className="py-2.5 px-3 text-center">{currentData.summary.expenseCount}</td>
                 <td className="py-2.5 px-3 text-right">100.0%</td>
                 <td className="py-2.5 px-3 text-right text-rose-400">
-                  {formatCurrency(currentData.summary.totalExpenses)}
+                  {formatCurrency(currentData.summary.totalExpenses, false, currency)}
                 </td>
               </tr>
 
@@ -358,7 +358,7 @@ Unsettled Settlements: ${formatCurrency(currentData.summary.pendingAmount)}`;
                 <td className={`py-3 px-3 text-right ${
                   currentData.summary.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'
                 }`}>
-                  {formatCurrency(currentData.summary.netProfit)}
+                  {formatCurrency(currentData.summary.netProfit, false, currency)}
                 </td>
               </tr>
             </tbody>

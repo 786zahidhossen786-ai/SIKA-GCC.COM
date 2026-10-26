@@ -26,7 +26,7 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
   onOpenAddModal,
   onEditTransaction,
 }) => {
-  const { transactions, deleteTransaction } = useFinancialData();
+  const { transactions, deleteTransaction, currency } = useFinancialData();
   const { canAddTransaction, canEditTransaction, canDeleteTransaction, role } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -303,7 +303,7 @@ export const TransactionLedger: React.FC<TransactionLedgerProps> = ({
                     </td>
                     <td className="py-3 px-3 text-right font-mono-numbers font-semibold whitespace-nowrap">
                       <span className={t.type === 'revenue' ? 'text-emerald-400' : 'text-slate-200'}>
-                        {t.type === 'revenue' ? '+' : '-'}{formatCurrency(t.amount)}
+                        {t.type === 'revenue' ? '+' : '-'}{formatCurrency(t.amount, false, currency)}
                       </span>
                     </td>
                     <td className="py-3 px-3 text-center whitespace-nowrap">

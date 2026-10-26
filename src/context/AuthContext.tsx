@@ -33,7 +33,7 @@ const DEFAULT_OWNER_PROFILE: UserProfile = {
   email: '786zahidhossen786@gmail.com',
   displayName: 'Zahid Hossen',
   role: 'founder',
-  businessName: 'Vantage Enterprises',
+  businessName: 'SIKA GCC Commercial Solutions',
   createdAt: '2026-01-01T00:00:00Z',
 };
 
@@ -43,71 +43,71 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: '786zahidhossen786@gmail.com',
     displayName: 'Zahid Hossen (Founder)',
     role: 'founder',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-01-01T00:00:00Z',
   },
   'co-founder': {
     userId: 'cofounder-tariq',
-    email: 'tariq.cofounder@vantagecorp.io',
+    email: 'tariq.cofounder@sika-gcc.com',
     displayName: 'Tariq Rahman (Co-Founder)',
     role: 'co-founder',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-01-15T00:00:00Z',
   },
   ceo: {
-    userId: 'ceo-elena',
-    email: 'elena.ceo@vantagecorp.io',
-    displayName: 'Elena Rostova (CEO)',
+    userId: 'ceo-amina',
+    email: 'amina.ceo@sika-gcc.com',
+    displayName: 'Amina Al-Mansoor (CEO)',
     role: 'ceo',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-02-01T00:00:00Z',
   },
   director: {
-    userId: 'director-robert',
-    email: 'robert.director@vantagecorp.io',
-    displayName: 'Robert Hayes (Managing Director)',
+    userId: 'director-khalid',
+    email: 'khalid.director@sika-gcc.com',
+    displayName: 'Eng. Khalid Al-Sayed (Director)',
     role: 'director',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-02-15T00:00:00Z',
   },
   manager: {
-    userId: 'manager-alex',
-    email: 'alex.finance@vantagecorp.io',
-    displayName: 'Alex Vance (Finance Manager)',
+    userId: 'manager-hassan',
+    email: 'hassan.finance@sika-gcc.com',
+    displayName: 'Hassan Reza (Operations & Finance)',
     role: 'manager',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-03-15T00:00:00Z',
   },
   salesman: {
     userId: 'salesman-bilal',
-    email: 'bilal.sales@vantagecorp.io',
+    email: 'bilal.sales@sika-gcc.com',
     displayName: 'Bilal Karim (Salesman)',
     role: 'salesman',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-04-01T00:00:00Z',
   },
   worker: {
-    userId: 'worker-david',
-    email: 'david.worker@vantagecorp.io',
-    displayName: 'David Miller (Worker)',
+    userId: 'worker-faisal',
+    email: 'faisal.worker@sika-gcc.com',
+    displayName: 'Faisal Ahmed (Worker)',
     role: 'worker',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-04-15T00:00:00Z',
   },
   owner: {
     userId: 'default-owner',
     email: '786zahidhossen786@gmail.com',
-    displayName: 'Zahid Hossen (Owner)',
+    displayName: 'Zahid Hossen (Executive Owner)',
     role: 'owner',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-01-01T00:00:00Z',
   },
   analyst: {
-    userId: 'analyst-sarah',
-    email: 'sarah.analyst@vantagecorp.io',
-    displayName: 'Sarah Chen (Financial Analyst)',
+    userId: 'analyst-audit',
+    email: 'audit@sika-gcc.com',
+    displayName: 'Financial Auditor (Analyst)',
     role: 'analyst',
-    businessName: 'Vantage Enterprises',
+    businessName: 'SIKA GCC Commercial Solutions',
     createdAt: '2026-05-10T00:00:00Z',
   },
 };
@@ -123,10 +123,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     testConnection();
 
-    // Check saved demo role
-    const savedRole = localStorage.getItem('vantage_demo_role') as UserRole;
-    if (savedRole && DEMO_PROFILES[savedRole]) {
-      setProfile(DEMO_PROFILES[savedRole]);
+    // Check saved demo role and initialize SIKA GCC profile
+    if (localStorage.getItem('sika_gcc_auth_v2') !== 'true') {
+      localStorage.setItem('sika_gcc_auth_v2', 'true');
+      localStorage.setItem('vantage_demo_role', 'founder');
+      setProfile(DEMO_PROFILES.founder);
+    } else {
+      const savedRole = localStorage.getItem('vantage_demo_role') as UserRole;
+      if (savedRole && DEMO_PROFILES[savedRole]) {
+        setProfile(DEMO_PROFILES[savedRole]);
+      }
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -136,10 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const isOwnerEmail = user.email === '786zahidhossen786@gmail.com';
         setProfile({
           userId: user.uid,
-          email: user.email || 'user@vantagecorp.io',
+          email: user.email || 'user@sika-gcc.com',
           displayName: user.displayName || 'Authorized Member',
           role: isOwnerEmail ? 'founder' : 'manager',
-          businessName: 'Vantage Enterprises',
+          businessName: 'SIKA GCC Commercial Solutions',
           photoURL: user.photoURL || undefined,
           createdAt: new Date().toISOString(),
         });

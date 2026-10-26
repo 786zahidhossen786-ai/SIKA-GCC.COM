@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Transaction, TransactionType, TransactionStatus } from '../../types';
 import { TRANSACTION_CATEGORIES } from '../../data/seedData';
 import { useAuth } from '../../context/AuthContext';
+import { useFinancialData } from '../../context/FinancialDataContext';
 import { X, Heart, Gift, Tag, Coffee } from 'lucide-react';
 
 interface TransactionModalProps {
@@ -18,13 +19,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   initialData,
 }) => {
   const { profile, role } = useAuth();
+  const { currency } = useFinancialData();
   const [type, setType] = useState<TransactionType>('revenue');
-  const [category, setCategory] = useState<string>('Enterprise Retainer');
+  const [category, setCategory] = useState<string>('Commercial Chemical Contracts');
   const [amount, setAmount] = useState<string>('');
   const [date, setDate] = useState<string>('2026-10-26');
   const [description, setDescription] = useState<string>('');
   const [status, setStatus] = useState<TransactionStatus>('cleared');
-  const [paymentMethod, setPaymentMethod] = useState<string>('Wire Transfer');
+  const [paymentMethod, setPaymentMethod] = useState<string>('Bank Wire');
   const [recordedBy, setRecordedBy] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -41,12 +43,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setRecordedBy(initialData.recordedBy || profile.displayName);
     } else {
       setType('revenue');
-      setCategory('Enterprise Retainer');
+      setCategory('Commercial Chemical Contracts');
       setAmount('');
       setDate('2026-10-26');
       setDescription('');
       setStatus('cleared');
-      setPaymentMethod('Wire Transfer');
+      setPaymentMethod('Bank Wire');
       setRecordedBy(profile.displayName);
     }
     setErrorMsg('');
@@ -211,7 +213,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                Amount (USD $) *
+                Amount ({currency}) *
               </label>
               <input
                 type="number"
