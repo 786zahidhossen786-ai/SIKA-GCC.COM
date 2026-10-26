@@ -4,11 +4,37 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  const rootDir = import.meta.dirname ?? path.resolve();
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': rootDir,
+      },
+    },
+    build: {
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('firebase')) {
+                return 'firebase-bundle';
+              }
+              if (id.includes('motion')) {
+                return 'motion-bundle';
+              }
+              if (id.includes('lucide-react')) {
+                return 'lucide-bundle';
+              }
+              if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+                return 'react-bundle';
+              }
+              return 'vendor-bundle';
+            }
+          },
+        },
       },
     },
     server: {
