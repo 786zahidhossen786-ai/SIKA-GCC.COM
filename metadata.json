@@ -1,0 +1,6 @@
+{
+  "name": "Vantage Growth & Financial Analytics",
+  "description": "Business revenue and expense tracking, growth analytics with daily, weekly, monthly, and yearly reports, CSV export, and role-based access control.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

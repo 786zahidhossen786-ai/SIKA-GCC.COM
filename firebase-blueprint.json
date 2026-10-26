@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account information and role-based access level",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The Firebase Auth UID of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the team member"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["founder", "co-founder", "ceo", "director", "manager", "salesman", "worker", "owner", "analyst"],
+          "description": "Role in the organization for access control"
+        },
+        "businessName": {
+          "type": "string",
+          "description": "Name of the business entity"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when user profile was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when user profile was last updated"
+        }
+      },
+      "required": ["userId", "email", "role", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial revenue or expense record with category, date, and description",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique transaction ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the user who recorded the transaction"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["revenue", "expense"],
+          "description": "Transaction type: revenue or expense"
+        },
+        "category": {
+          "type": "string",
+          "description": "Financial category (e.g., Client Retainer, SaaS Subscription, Hosting, Payroll, Marketing)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Monetary value in business currency"
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "Transaction date in ISO format YYYY-MM-DD"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Memo or details of the financial entry"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["cleared", "pending"],
+          "description": "Reconciliation status"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment instrument (e.g., Stripe, Bank Wire, Credit Card, ACH, Cash)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["userId", "type", "category", "amount", "date", "description", "createdAt"]
+    },
+    "FinancialGoal": {
+      "title": "FinancialGoal",
+      "description": "Monthly or annual revenue target and expense budget ceilings",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique goal ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the goal creator"
+        },
+        "period": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "yearly"],
+          "description": "Target cadence"
+        },
+        "targetRevenue": {
+          "type": "number",
+          "description": "Revenue target for this period"
+        },
+        "maxExpenseBudget": {
+          "type": "number",
+          "description": "Maximum budget allocation for expenses"
+        },
+        "year": {
+          "type": "number",
+          "description": "Target calendar year"
+        },
+        "month": {
+          "type": "number",
+          "description": "Optional month (1-12) for monthly goals"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["userId", "period", "targetRevenue", "maxExpenseBudget", "year", "createdAt"]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "Authorized team member with role-based permissions",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique member identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the business owner managing this member"
+        },
+        "email": {
+          "type": "string",
+          "description": "Invited member email address"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the team member"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["founder", "co-founder", "ceo", "director", "manager", "salesman", "worker", "owner", "analyst"],
+          "description": "Assigned access control role"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "invited", "suspended"],
+          "description": "Membership status"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["userId", "email", "name", "role", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profiles with authentication UIDs and RBAC roles"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Stores business revenue and expense transactions"
+    },
+    "/financial_goals/{goalId}": {
+      "schema": { "$ref": "#/entities/FinancialGoal" },
+      "description": "Stores revenue targets and expense budgets"
+    },
+    "/team_members/{memberId}": {
+      "schema": { "$ref": "#/entities/TeamMember" },
+      "description": "Stores team membership and permission assignments"
+    }
+  }
+}

@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == '786zahidhossen786@gmail.com';
+    }
+
+    // Check caller's role in the organization
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isExecutive() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         getUserRole() in ['founder', 'co-founder', 'ceo', 'owner'])
+      );
+    }
+
+    function isLeaderOrManager() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         getUserRole() in ['founder', 'co-founder', 'ceo', 'director', 'manager', 'owner'])
+      );
+    }
+
+    function canWriteTransaction() {
+      return isSignedIn() && (
+        isBootstrappedAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         getUserRole() in ['founder', 'co-founder', 'ceo', 'director', 'manager', 'salesman', 'worker', 'owner'])
+      );
+    }
+
+    // Validation blueprints
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'email', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['userId', 'email', 'displayName', 'role', 'businessName', 'createdAt', 'updatedAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.email is string && data.email.size() <= 128 &&
+        data.role in ['founder', 'co-founder', 'ceo', 'director', 'manager', 'salesman', 'worker', 'owner', 'analyst'] &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('businessName' in data) || (data.businessName is string && data.businessName.size() <= 120)) &&
+        data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'type', 'category', 'amount', 'date', 'description', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'userId', 'type', 'category', 'amount', 'date', 'description', 'status', 'paymentMethod', 'recordedBy', 'createdAt', 'updatedAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.type in ['revenue', 'expense'] &&
+        data.category is string && data.category.size() > 0 && data.category.size() <= 80 &&
+        data.amount is number && data.amount >= 0 &&
+        data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        data.description is string && data.description.size() <= 255 &&
+        (!('status' in data) || data.status in ['cleared', 'pending']) &&
+        (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() <= 60)) &&
+        (!('recordedBy' in data) || (data.recordedBy is string && data.recordedBy.size() <= 80)) &&
+        data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    function isValidFinancialGoal(data) {
+      return data.keys().hasAll(['userId', 'period', 'targetRevenue', 'maxExpenseBudget', 'year', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'userId', 'period', 'targetRevenue', 'maxExpenseBudget', 'year', 'month', 'createdAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.period in ['monthly', 'quarterly', 'yearly'] &&
+        data.targetRevenue is number && data.targetRevenue >= 0 &&
+        data.maxExpenseBudget is number && data.maxExpenseBudget >= 0 &&
+        data.year is number && data.year >= 2000 && data.year <= 2100 &&
+        (!('month' in data) || (data.month is number && data.month >= 1 && data.month <= 12)) &&
+        data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    function isValidTeamMember(data) {
+      return data.keys().hasAll(['userId', 'email', 'name', 'role', 'status', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'userId', 'email', 'name', 'role', 'status', 'createdAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.email is string && data.email.size() <= 128 &&
+        data.name is string && data.name.size() <= 100 &&
+        data.role in ['founder', 'co-founder', 'ceo', 'director', 'manager', 'salesman', 'worker', 'owner', 'analyst'] &&
+        data.status in ['active', 'invited', 'suspended'] &&
+        data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (request.auth.uid == resource.data.userId || isBootstrappedAdmin());
+      
+      allow create: if isSignedIn() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      
+      allow update: if isSignedIn() && isValidId(userId) && userId == request.auth.uid &&
+        isValidUser(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'businessName', 'role', 'updatedAt']);
+      
+      allow delete: if isSignedIn() && (isBootstrappedAdmin() || isExecutive());
+    }
+
+    // 2. Financial Transactions
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && isValidId(transactionId) && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidId(transactionId) &&
+        isValidTransaction(incoming());
+
+      allow update: if isSignedIn() && isValidId(transactionId) &&
+        resource.data.userId == request.auth.uid &&
+        isValidTransaction(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['category', 'amount', 'date', 'description', 'status', 'paymentMethod', 'recordedBy', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(transactionId) &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // 3. Financial Goals
+    match /financial_goals/{goalId} {
+      allow get: if isSignedIn() && isValidId(goalId) && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidId(goalId) &&
+        isValidFinancialGoal(incoming());
+
+      allow update: if isSignedIn() && isValidId(goalId) &&
+        resource.data.userId == request.auth.uid &&
+        isValidFinancialGoal(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt;
+
+      allow delete: if isSignedIn() && isValidId(goalId) &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // 4. Team Members
+    match /team_members/{memberId} {
+      allow get: if isSignedIn() && isValidId(memberId) && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidId(memberId) &&
+        isValidTeamMember(incoming());
+
+      allow update: if isSignedIn() && isValidId(memberId) &&
+        resource.data.userId == request.auth.uid &&
+        isValidTeamMember(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt;
+
+      allow delete: if isSignedIn() && isValidId(memberId) &&
+        resource.data.userId == request.auth.uid;
+    }
+  }
+}
