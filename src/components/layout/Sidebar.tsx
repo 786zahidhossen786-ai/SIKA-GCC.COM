@@ -11,6 +11,8 @@ import {
   Sparkles,
   X,
   TrendingUp,
+  LogIn,
+  Lock,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,7 +22,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
   const { activeTab, setActiveTab, resetToDemoData } = useFinancialData();
-  const { role, profile } = useAuth();
+  const { role, profile, openLoginModal, lockSession, isAuthenticated } = useAuth();
 
   const navItems: { id: ViewTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'overview', label: 'Growth Overview', icon: LayoutDashboard },
@@ -95,14 +97,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         </div>
         <p className="text-[11px] text-slate-400 font-medium truncate">{profile.displayName}</p>
         <p className="text-[10px] text-slate-500 mt-1">
-          {(role === 'founder' || role === 'co-founder' || role === 'owner') && 'Full root administrative & deletion capabilities'}
-          {role === 'ceo' && 'Executive governance & full P&L oversight'}
-          {role === 'director' && 'Leadership oversight & operational control'}
-          {role === 'manager' && 'Add/edit transactions and export CSVs'}
-          {role === 'salesman' && 'Sales orders, customer discounts & client gifts'}
-          {role === 'worker' && 'Daily operational expenses & petty cash logs'}
+          {(role === 'worker' || role === 'salesman') && 'Operational logging permissions enforced'}
           {role === 'analyst' && 'Analytical view and report export access'}
         </p>
+
+        <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+          <button
+            type="button"
+            onClick={openLoginModal}
+            className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>{isAuthenticated ? 'Switch Account' : 'Sign In Portal'}</span>
+          </button>
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={lockSession}
+              className="text-slate-500 hover:text-amber-400 transition-colors p-1 rounded"
+              title="Lock Screen"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Reset Seed Demo Data */}

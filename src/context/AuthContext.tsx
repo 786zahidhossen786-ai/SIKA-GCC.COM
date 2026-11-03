@@ -15,7 +15,16 @@ interface AuthContextType {
   role: UserRole;
   isLoading: boolean;
   isDemoMode: boolean;
-  signInWithGoogle: () => Promise<void>;
+  isAuthenticated: boolean;
+  isLocked: boolean;
+  isLoginModalOpen: boolean;
+  openLoginModal: () => void;
+  closeLoginModal: () => void;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  loginWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithRole: (newRole: UserRole) => void;
+  lockSession: () => void;
+  unlockSession: () => void;
   signOut: () => Promise<void>;
   switchDemoRole: (newRole: UserRole) => void;
   // Permissions derived from RBAC
@@ -119,6 +128,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_OWNER_PROFILE);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('sika_auth_session') === 'authenticated';
+  });
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     testConnection();
@@ -139,6 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user) {
         setCurrentUser(user);
         setIsDemoMode(false);
+        setIsAuthenticated(true);
+        localStorage.setItem('sika_auth_session', 'authenticated');
         const isOwnerEmail = user.email === '786zahidhossen786@gmail.com';
         setProfile({
           userId: user.uid,
@@ -151,7 +167,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       } else {
         setCurrentUser(null);
-        setIsDemoMode(true);
+        const sessionActive = localStorage.getItem('sika_auth_session') === 'authenticated';
+        setIsAuthenticated(sessionActive);
+        setIsDemoMode(!sessionActive);
         const currentSavedRole = (localStorage.getItem('vantage_demo_role') as UserRole) || 'founder';
         setProfile(DEMO_PROFILES[currentSavedRole] || DEMO_PROFILES.founder);
       }
@@ -161,13 +179,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const openLoginModal = () => setIsLoginModalOpen(true);
+  const closeLoginModal = () => setIsLoginModalOpen(false);
+
+  const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      setIsAuthenticated(true);
+      setIsLocked(false);
+      localStorage.setItem('sika_auth_session', 'authenticated');
+      closeLoginModal();
+      return { success: true };
     } catch (error) {
       console.warn('Firebase popup sign-in encountered an issue or was closed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Google sign-in popup closed or cancelled.',
+      };
     }
+  };
+
+  const loginWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    if (!email || !pass) {
+      return { success: false, error: 'Please enter both your work email and password.' };
+    }
+
+    if (pass.length < 4) {
+      return { success: false, error: 'Password must be at least 4 characters.' };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check against known company profiles
+    let matchingRole: UserRole = 'salesman';
+    if (cleanEmail.includes('zahid') || cleanEmail.includes('786zahidhossen786')) {
+      matchingRole = 'founder';
+    } else if (cleanEmail.includes('tariq') || cleanEmail.includes('cofounder')) {
+      matchingRole = 'co-founder';
+    } else if (cleanEmail.includes('amina') || cleanEmail.includes('ceo')) {
+      matchingRole = 'ceo';
+    } else if (cleanEmail.includes('khalid') || cleanEmail.includes('director')) {
+      matchingRole = 'director';
+    } else if (cleanEmail.includes('hassan') || cleanEmail.includes('finance') || cleanEmail.includes('manager')) {
+      matchingRole = 'manager';
+    } else if (cleanEmail.includes('bilal') || cleanEmail.includes('sales')) {
+      matchingRole = 'salesman';
+    } else if (cleanEmail.includes('faisal') || cleanEmail.includes('worker')) {
+      matchingRole = 'worker';
+    }
+
+    const selectedProfile = DEMO_PROFILES[matchingRole];
+    setProfile({
+      ...selectedProfile,
+      email: cleanEmail,
+    });
+    localStorage.setItem('vantage_demo_role', matchingRole);
+    localStorage.setItem('sika_auth_session', 'authenticated');
+    setIsAuthenticated(true);
+    setIsDemoMode(false);
+    setIsLocked(false);
+    closeLoginModal();
+
+    return { success: true };
+  };
+
+  const loginWithRole = (newRole: UserRole) => {
+    localStorage.setItem('vantage_demo_role', newRole);
+    localStorage.setItem('sika_auth_session', 'authenticated');
+    setProfile(DEMO_PROFILES[newRole]);
+    setIsAuthenticated(true);
+    setIsDemoMode(false);
+    setIsLocked(false);
+    closeLoginModal();
+  };
+
+  const lockSession = () => {
+    setIsLocked(true);
+  };
+
+  const unlockSession = () => {
+    setIsLocked(false);
   };
 
   const signOut = async () => {
@@ -175,8 +267,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (currentUser) {
         await fbSignOut(auth);
       }
+      setIsAuthenticated(false);
       setIsDemoMode(true);
+      setIsLocked(false);
       setProfile(DEMO_PROFILES.founder);
+      localStorage.removeItem('sika_auth_session');
       localStorage.removeItem('vantage_demo_role');
     } catch (error) {
       console.error('Sign out error:', error);
@@ -212,7 +307,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: profile.role,
         isLoading,
         isDemoMode,
+        isAuthenticated,
+        isLocked,
+        isLoginModalOpen,
+        openLoginModal,
+        closeLoginModal,
         signInWithGoogle,
+        loginWithEmail,
+        loginWithRole,
+        lockSession,
+        unlockSession,
         signOut,
         switchDemoRole,
         ...permissions,

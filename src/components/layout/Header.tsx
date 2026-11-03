@@ -3,7 +3,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useFinancialData } from '../../context/FinancialDataContext';
 import { UserRole } from '../../types';
 import { SupportedCurrency } from '../../utils/analytics';
-import { ShieldCheck, LogIn, LogOut, ChevronDown, Plus, Download, UploadCloud, Cloud } from 'lucide-react';
+import {
+  ShieldCheck,
+  LogIn,
+  LogOut,
+  ChevronDown,
+  Plus,
+  Download,
+  UploadCloud,
+  Cloud,
+  Lock,
+  UserCheck,
+} from 'lucide-react';
 import { generateTransactionsCsv, downloadCsvFile } from '../../utils/csv';
 import { ImportModal } from '../transactions/ImportModal';
 
@@ -13,8 +24,28 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu }) => {
-  const { profile, role, currentUser, isDemoMode, signInWithGoogle, signOut, switchDemoRole, canAddTransaction } = useAuth();
-  const { filteredTransactions, selectedPeriod, currency, setCurrency, ledgerMode, syncToCloudDatabase } = useFinancialData();
+  const {
+    profile,
+    role,
+    currentUser,
+    isAuthenticated,
+    isDemoMode,
+    openLoginModal,
+    lockSession,
+    signOut,
+    switchDemoRole,
+    canAddTransaction,
+  } = useAuth();
+
+  const {
+    filteredTransactions,
+    selectedPeriod,
+    currency,
+    setCurrency,
+    ledgerMode,
+    syncToCloudDatabase,
+  } = useFinancialData();
+
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -25,10 +56,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu
   };
 
   const handleCloudSync = async () => {
-    setSyncStatus('Syncing...');
+    setSyncStatus('Syncing to Cloud...');
     const res = await syncToCloudDatabase();
     setSyncStatus(res.message);
-    setTimeout(() => setSyncStatus(null), 3000);
+    setTimeout(() => setSyncStatus(null), 3500);
   };
 
   const roleLabels: Record<UserRole, { title: string; color: string; desc: string }> = {
@@ -93,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu
           </span>
         </nav>
 
-        {/* Zone 3: Currency + Actions + RBAC Switcher + Auth */}
+        {/* Zone 3: Currency + Actions + Auth & Login System */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Currency Selector */}
           <div className="relative">
@@ -118,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu
             className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 rounded-lg transition-colors whitespace-nowrap shrink-0"
           >
             <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden md:inline">Real Data / Import</span>
+            <span className="hidden md:inline">Real Data</span>
           </button>
 
           {/* Quick CSV Export */}
@@ -161,97 +192,123 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu
             </span>
           )}
 
-          {/* Role Switcher & Profile Dropdown */}
-          <div className="relative">
+          {/* LOGIN SYSTEM CONTROLS */}
+          {!isAuthenticated ? (
+            /* Prominent Login Button */
             <button
-              onClick={() => setShowRoleMenu(!showRoleMenu)}
-              className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 rounded-lg transition-colors text-xs"
-              aria-expanded={showRoleMenu}
-              aria-haspopup="true"
+              onClick={openLoginModal}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg shadow-sm hover:shadow-emerald-400/20 transition-all cursor-pointer whitespace-nowrap"
             >
-              <div className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-white uppercase">
-                {profile.displayName.slice(0, 1)}
-              </div>
-              <div className="hidden sm:flex flex-col text-left">
-                <span className="font-semibold text-slate-200 truncate max-w-[110px] leading-tight">
-                  {profile.displayName.split(' ')[0]}
-                </span>
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
-                  {role}
-                </span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Sign In</span>
             </button>
+          ) : (
+            /* Authenticated Profile & Session Dropdown */
+            <div className="relative">
+              <button
+                onClick={() => setShowRoleMenu(!showRoleMenu)}
+                className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-lg transition-colors text-xs"
+                aria-expanded={showRoleMenu}
+                aria-haspopup="true"
+              >
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase">
+                  {profile.displayName.slice(0, 1)}
+                </div>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="font-semibold text-slate-200 truncate max-w-[110px] leading-tight">
+                    {profile.displayName.split(' ')[0]}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 uppercase tracking-wider font-mono">
+                    {role}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
 
-            {showRoleMenu && (
-              <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl p-2.5 z-50 text-xs">
-                <div className="p-2 border-b border-slate-800 mb-2">
-                  <p className="font-semibold text-white truncate">{profile.displayName}</p>
-                  <p className="text-slate-400 text-[11px] truncate">{profile.email}</p>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium border uppercase tracking-wider ${roleLabels[role]?.color || ''}`}>
-                      {roleLabels[role]?.title || role}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {isDemoMode ? 'Persona Switcher' : 'Cloud Connected'}
-                    </span>
+              {showRoleMenu && (
+                <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl p-2.5 z-50 text-xs">
+                  <div className="p-2 border-b border-slate-800 mb-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-white truncate">{profile.displayName}</p>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/80 font-mono font-medium">
+                        ONLINE
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-[11px] truncate mt-0.5">{profile.email}</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium border uppercase tracking-wider ${roleLabels[role]?.color || ''}`}>
+                        {roleLabels[role]?.title || role}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        {currentUser ? 'Cloud Auth' : 'Verified'}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* RBAC Role Switcher */}
-                <div className="mb-2 max-h-60 overflow-y-auto">
-                  <p className="px-2 py-1 text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
-                    Switch Account Role:
-                  </p>
-                  {(['founder', 'co-founder', 'ceo', 'director', 'manager', 'salesman', 'worker'] as UserRole[]).map((r) => (
+                  {/* Quick Role Switcher */}
+                  <div className="mb-2 max-h-56 overflow-y-auto">
+                    <p className="px-2 py-1 text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
+                      Switch Role Profile:
+                    </p>
+                    {(['founder', 'co-founder', 'ceo', 'director', 'manager', 'salesman', 'worker'] as UserRole[]).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => {
+                          switchDemoRole(r);
+                          setShowRoleMenu(false);
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between transition-colors ${
+                          role === r ? 'bg-slate-800 text-white font-medium' : 'text-slate-300 hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <div>
+                          <div className="capitalize font-semibold text-slate-200">{roleLabels[r]?.title || r}</div>
+                          <div className="text-[10px] text-slate-400">{roleLabels[r]?.desc}</div>
+                        </div>
+                        {role === r && <ShieldCheck className="w-4 h-4 text-emerald-400" />}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Actions: Switch Account Modal, Lock Session, Sign Out */}
+                  <div className="pt-2 border-t border-slate-800 space-y-1">
                     <button
-                      key={r}
                       onClick={() => {
-                        switchDemoRole(r);
                         setShowRoleMenu(false);
+                        openLoginModal();
                       }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between transition-colors ${
-                        role === r ? 'bg-slate-800 text-white font-medium' : 'text-slate-300 hover:bg-slate-800/60'
-                      }`}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-slate-300 hover:bg-slate-800 rounded-lg transition-colors text-xs font-medium"
                     >
-                      <div>
-                        <div className="capitalize font-semibold text-slate-200">{roleLabels[r]?.title || r}</div>
-                        <div className="text-[10px] text-slate-400">{roleLabels[r]?.desc}</div>
-                      </div>
-                      {role === r && <ShieldCheck className="w-4 h-4 text-emerald-400" />}
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Switch Account / Sign In</span>
                     </button>
-                  ))}
-                </div>
 
-                {/* Sign In / Out */}
-                <div className="pt-2 border-t border-slate-800">
-                  {currentUser ? (
                     <button
                       onClick={() => {
-                        signOut();
                         setShowRoleMenu(false);
+                        lockSession();
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors"
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-amber-400 hover:bg-amber-950/30 rounded-lg transition-colors text-xs font-medium"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Lock Financial Screen</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        signOut();
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors text-xs font-medium"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign Out of Google</span>
+                      <span>Sign Out</span>
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        signInWithGoogle();
-                        setShowRoleMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition-colors font-medium"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>Sign In with Google</span>
-                    </button>
-                  )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 

@@ -13,6 +13,8 @@ import { FinancialReportsView } from './components/reports/FinancialReportsView'
 import { TransactionLedger } from './components/transactions/TransactionLedger';
 import { TeamManagementView } from './components/team/TeamManagementView';
 import { TransactionModal } from './components/transactions/TransactionModal';
+import { LoginModal } from './components/auth/LoginModal';
+import { LockScreenGate } from './components/auth/LockScreenGate';
 import { Transaction } from './types';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -94,6 +96,12 @@ function DashboardApp() {
         onSubmit={handleModalSubmit}
         initialData={editingTransaction}
       />
+
+      {/* Login & Authentication System Modal */}
+      <LoginModal />
+
+      {/* Screen Lock Security Gate */}
+      <LockScreenGate />
 
       {/* Toast Notification */}
       {toastMessage && (
