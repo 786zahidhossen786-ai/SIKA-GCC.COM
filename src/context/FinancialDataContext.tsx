@@ -11,11 +11,36 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
 import { useAuth } from './AuthContext';
-import { UserRole, Transaction, FinancialGoal, TeamMember, ViewTab } from '../types';
+import {
+  UserRole,
+  Transaction,
+  FinancialGoal,
+  TeamMember,
+  ViewTab,
+  SalesContract,
+  ContractStatus,
+  ClientGiftRecord,
+  ExpenseApprovalClaim,
+  DepartmentBudget,
+  DisbursementRecord,
+  SadaqahRecord,
+  AuditLogEntry,
+  WorkerSiteLog,
+  SaudiEmployeeRecord,
+} from '../types';
 import {
   INITIAL_TRANSACTIONS,
   INITIAL_GOAL,
   INITIAL_TEAM_MEMBERS,
+  INITIAL_SALES_CONTRACTS,
+  INITIAL_CLIENT_GIFTS,
+  INITIAL_APPROVAL_CLAIMS,
+  INITIAL_DEPARTMENT_BUDGETS,
+  INITIAL_DISBURSEMENTS,
+  INITIAL_SADAQAH_RECORDS,
+  INITIAL_AUDIT_LOGS,
+  INITIAL_WORKER_LOGS,
+  INITIAL_SAUDI_EMPLOYEES,
 } from '../data/seedData';
 import {
   TimePeriod,
@@ -67,6 +92,44 @@ interface FinancialDataContextType {
   clearTransactions: () => void;
   importTransactionsCsv: (csvContent: string) => Promise<{ count: number; error?: string }>;
   syncToCloudDatabase: () => Promise<{ success: boolean; message: string }>;
+
+  // Salesman Systems
+  salesContracts: SalesContract[];
+  addSalesContract: (data: Omit<SalesContract, 'id' | 'createdAt' | 'pushedToLedger' | 'commissionEarned'>) => Promise<boolean>;
+  updateSalesContractStatus: (id: string, status: ContractStatus) => Promise<boolean>;
+  pushContractToRevenueLedger: (contractId: string) => Promise<boolean>;
+  clientGifts: ClientGiftRecord[];
+  addClientGift: (data: Omit<ClientGiftRecord, 'id' | 'createdAt'>) => Promise<boolean>;
+
+  // Manager Operations & Approvals
+  approvalClaims: ExpenseApprovalClaim[];
+  submitApprovalClaim: (data: Omit<ExpenseApprovalClaim, 'id' | 'submittedAt' | 'pushedToExpenseLedger' | 'status'>) => Promise<boolean>;
+  reviewApprovalClaim: (id: string, status: 'approved' | 'rejected', managerNote?: string) => Promise<boolean>;
+  departmentBudgets: DepartmentBudget[];
+  updateDepartmentBudgetCap: (id: string, newCap: number) => Promise<boolean>;
+  disbursements: DisbursementRecord[];
+  recordDisbursement: (data: Omit<DisbursementRecord, 'id' | 'processedAt'>) => Promise<boolean>;
+
+  // Owner Suite (Sadaqah & Audit)
+  sadaqahRecords: SadaqahRecord[];
+  recordSadaqah: (data: Omit<SadaqahRecord, 'id' | 'createdAt'>) => Promise<boolean>;
+  auditLogs: AuditLogEntry[];
+  addAuditLog: (action: string, entityType: AuditLogEntry['entityType'], details: string, entityId?: string) => void;
+
+  // Worker & Field Staff
+  workerLogs: WorkerSiteLog[];
+  addWorkerLog: (data: Omit<WorkerSiteLog, 'id' | 'createdAt'>) => Promise<boolean>;
+
+  // Saudi Arabia & GCC Employee Records & Document Expiry Compliance
+  saudiEmployees: SaudiEmployeeRecord[];
+  addSaudiEmployee: (data: Omit<SaudiEmployeeRecord, 'id' | 'createdAt'>) => Promise<boolean>;
+  updateSaudiEmployee: (id: string, data: Partial<SaudiEmployeeRecord>) => Promise<boolean>;
+  removeSaudiEmployee: (id: string) => Promise<boolean>;
+  renewEmployeeDocument: (
+    employeeId: string,
+    docType: 'iqama' | 'passport' | 'qiwa' | 'insurance' | 'drivingLicense' | 'healthCert',
+    newExpiryDate: string
+  ) => Promise<boolean>;
 }
 
 const FinancialDataContext = createContext<FinancialDataContextType | undefined>(undefined);
@@ -152,6 +215,115 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
     return INITIAL_TEAM_MEMBERS;
   });
 
+  // Role Systems States
+  const [salesContracts, setSalesContracts] = useState<SalesContract[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_sales_contracts', JSON.stringify(INITIAL_SALES_CONTRACTS));
+      return INITIAL_SALES_CONTRACTS;
+    }
+    const cached = localStorage.getItem('sika_sales_contracts');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_SALES_CONTRACTS; }
+    }
+    return INITIAL_SALES_CONTRACTS;
+  });
+
+  const [clientGifts, setClientGifts] = useState<ClientGiftRecord[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_client_gifts', JSON.stringify(INITIAL_CLIENT_GIFTS));
+      return INITIAL_CLIENT_GIFTS;
+    }
+    const cached = localStorage.getItem('sika_client_gifts');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_CLIENT_GIFTS; }
+    }
+    return INITIAL_CLIENT_GIFTS;
+  });
+
+  const [approvalClaims, setApprovalClaims] = useState<ExpenseApprovalClaim[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_approval_claims', JSON.stringify(INITIAL_APPROVAL_CLAIMS));
+      return INITIAL_APPROVAL_CLAIMS;
+    }
+    const cached = localStorage.getItem('sika_approval_claims');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_APPROVAL_CLAIMS; }
+    }
+    return INITIAL_APPROVAL_CLAIMS;
+  });
+
+  const [departmentBudgets, setDepartmentBudgets] = useState<DepartmentBudget[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_dept_budgets', JSON.stringify(INITIAL_DEPARTMENT_BUDGETS));
+      return INITIAL_DEPARTMENT_BUDGETS;
+    }
+    const cached = localStorage.getItem('sika_dept_budgets');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_DEPARTMENT_BUDGETS; }
+    }
+    return INITIAL_DEPARTMENT_BUDGETS;
+  });
+
+  const [disbursements, setDisbursements] = useState<DisbursementRecord[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_disbursements', JSON.stringify(INITIAL_DISBURSEMENTS));
+      return INITIAL_DISBURSEMENTS;
+    }
+    const cached = localStorage.getItem('sika_disbursements');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_DISBURSEMENTS; }
+    }
+    return INITIAL_DISBURSEMENTS;
+  });
+
+  const [sadaqahRecords, setSadaqahRecords] = useState<SadaqahRecord[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_sadaqah_records', JSON.stringify(INITIAL_SADAQAH_RECORDS));
+      return INITIAL_SADAQAH_RECORDS;
+    }
+    const cached = localStorage.getItem('sika_sadaqah_records');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_SADAQAH_RECORDS; }
+    }
+    return INITIAL_SADAQAH_RECORDS;
+  });
+
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_audit_logs', JSON.stringify(INITIAL_AUDIT_LOGS));
+      return INITIAL_AUDIT_LOGS;
+    }
+    const cached = localStorage.getItem('sika_audit_logs');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_AUDIT_LOGS; }
+    }
+    return INITIAL_AUDIT_LOGS;
+  });
+
+  const [workerLogs, setWorkerLogs] = useState<WorkerSiteLog[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_worker_logs', JSON.stringify(INITIAL_WORKER_LOGS));
+      return INITIAL_WORKER_LOGS;
+    }
+    const cached = localStorage.getItem('sika_worker_logs');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_WORKER_LOGS; }
+    }
+    return INITIAL_WORKER_LOGS;
+  });
+
+  const [saudiEmployees, setSaudiEmployees] = useState<SaudiEmployeeRecord[]>(() => {
+    if (!hasMigrated) {
+      localStorage.setItem('sika_saudi_employees', JSON.stringify(INITIAL_SAUDI_EMPLOYEES));
+      return INITIAL_SAUDI_EMPLOYEES;
+    }
+    const cached = localStorage.getItem('sika_saudi_employees');
+    if (cached) {
+      try { return JSON.parse(cached); } catch { return INITIAL_SAUDI_EMPLOYEES; }
+    }
+    return INITIAL_SAUDI_EMPLOYEES;
+  });
+
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('monthly');
   const [activeTab, setActiveTab] = useState<ViewTab>('overview');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -168,6 +340,42 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     localStorage.setItem('vantage_team', JSON.stringify(teamMembers));
   }, [teamMembers]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_sales_contracts', JSON.stringify(salesContracts));
+  }, [salesContracts]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_client_gifts', JSON.stringify(clientGifts));
+  }, [clientGifts]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_approval_claims', JSON.stringify(approvalClaims));
+  }, [approvalClaims]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_dept_budgets', JSON.stringify(departmentBudgets));
+  }, [departmentBudgets]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_disbursements', JSON.stringify(disbursements));
+  }, [disbursements]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_sadaqah_records', JSON.stringify(sadaqahRecords));
+  }, [sadaqahRecords]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_audit_logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_worker_logs', JSON.stringify(workerLogs));
+  }, [workerLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('sika_saudi_employees', JSON.stringify(saudiEmployees));
+  }, [saudiEmployees]);
 
   // Set Ledger Mode
   const setLedgerMode = (mode: 'real' | 'clean') => {
@@ -429,14 +637,362 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
     return true;
   };
 
+  // Audit Logging Helper
+  const addAuditLog = (
+    action: string,
+    entityType: AuditLogEntry['entityType'],
+    details: string,
+    entityId?: string
+  ) => {
+    const entry: AuditLogEntry = {
+      id: `aud-${Date.now()}`,
+      action,
+      entityType,
+      entityId,
+      performedBy: profile.displayName,
+      userRole: profile.role,
+      details,
+      timestamp: new Date().toISOString(),
+    };
+    setAuditLogs((prev) => [entry, ...prev]);
+  };
+
+  // Salesman Systems
+  const addSalesContract = async (
+    data: Omit<SalesContract, 'id' | 'createdAt' | 'pushedToLedger' | 'commissionEarned'>
+  ): Promise<boolean> => {
+    const newId = `cnt-${Date.now()}`;
+    const commissionEarned = (data.netValue * data.commissionRatePct) / 100;
+    const newContract: SalesContract = {
+      ...data,
+      id: newId,
+      commissionEarned,
+      pushedToLedger: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setSalesContracts((prev) => [newContract, ...prev]);
+    addAuditLog(
+      'New Contract Drafted',
+      'contract',
+      `Drafted ${data.projectTitle} for ${data.clientName} (Value: AED ${data.netValue.toLocaleString()})`,
+      newId
+    );
+    return true;
+  };
+
+  const updateSalesContractStatus = async (id: string, status: ContractStatus): Promise<boolean> => {
+    setSalesContracts((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status } : c))
+    );
+    addAuditLog('Contract Status Updated', 'contract', `Updated contract ${id} status to ${status.toUpperCase()}`, id);
+    return true;
+  };
+
+  const pushContractToRevenueLedger = async (contractId: string): Promise<boolean> => {
+    const contract = salesContracts.find((c) => c.id === contractId);
+    if (!contract) return false;
+    if (contract.pushedToLedger) {
+      alert('This contract has already been recorded in the company revenue ledger.');
+      return false;
+    }
+
+    const success = await addTransaction({
+      type: 'revenue',
+      category: 'Commercial Chemical Contracts',
+      amount: contract.netValue,
+      date: new Date().toISOString().slice(0, 10),
+      description: `${contract.chemicalProduct} - ${contract.clientName} (${contract.projectTitle})`,
+      status: 'cleared',
+      paymentMethod: contract.paymentTerms.includes('Advance') ? 'Bank Wire' : 'Post-Dated Cheque',
+      recordedBy: contract.salesmanName,
+    });
+
+    if (success) {
+      setSalesContracts((prev) =>
+        prev.map((c) => (c.id === contractId ? { ...c, pushedToLedger: true, status: 'signed' } : c))
+      );
+      addAuditLog(
+        'Contract Pushed to Ledger',
+        'contract',
+        `Contract ${contract.projectTitle} (AED ${contract.netValue.toLocaleString()}) recorded as active revenue`,
+        contractId
+      );
+    }
+    return success;
+  };
+
+  const addClientGift = async (data: Omit<ClientGiftRecord, 'id' | 'createdAt'>): Promise<boolean> => {
+    const newId = `cg-${Date.now()}`;
+    const newRecord: ClientGiftRecord = {
+      ...data,
+      id: newId,
+      createdAt: new Date().toISOString(),
+    };
+    setClientGifts((prev) => [newRecord, ...prev]);
+
+    // Automatically record an expense in the company ledger under Gifts & Honorariums
+    await addTransaction({
+      type: 'expense',
+      category: 'Gifts & Honorariums',
+      amount: data.cost,
+      date: new Date().toISOString().slice(0, 10),
+      description: `${data.giftItem} for ${data.recipientName} (${data.clientName}) - ${data.occasion}`,
+      status: 'cleared',
+      paymentMethod: 'Company Card',
+      recordedBy: data.salesmanName,
+    });
+
+    addAuditLog('Corporate Gift Recorded', 'transaction', `Gift of AED ${data.cost} for ${data.recipientName}`, newId);
+    return true;
+  };
+
+  // Manager Operations: Claims & Approvals
+  const submitApprovalClaim = async (
+    data: Omit<ExpenseApprovalClaim, 'id' | 'submittedAt' | 'pushedToExpenseLedger' | 'status'>
+  ): Promise<boolean> => {
+    const newId = `clm-${Date.now()}`;
+    const newClaim: ExpenseApprovalClaim = {
+      ...data,
+      id: newId,
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      pushedToExpenseLedger: false,
+    };
+    setApprovalClaims((prev) => [newClaim, ...prev]);
+    addAuditLog('Claim Submitted for Review', 'claim', `Claim of AED ${data.amount} submitted by ${data.submittedBy}`, newId);
+    return true;
+  };
+
+  const reviewApprovalClaim = async (
+    id: string,
+    status: 'approved' | 'rejected',
+    managerNote?: string
+  ): Promise<boolean> => {
+    const claim = approvalClaims.find((c) => c.id === id);
+    if (!claim) return false;
+
+    setApprovalClaims((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              status,
+              managerNote: managerNote || c.managerNote,
+              reviewedAt: new Date().toISOString(),
+              reviewedBy: profile.displayName,
+            }
+          : c
+      )
+    );
+
+    // If approved and not yet recorded into company expense ledger, auto-log it
+    if (status === 'approved' && !claim.pushedToExpenseLedger) {
+      let ledgerCategory = 'Daily Expenses & Petty Cash';
+      if (claim.category.includes('Fuel')) ledgerCategory = 'Vehicle Fleet & Fuel';
+      else if (claim.category.includes('Hardware')) ledgerCategory = 'Raw Materials & Inventory';
+      else if (claim.category.includes('Gift')) ledgerCategory = 'Gifts & Honorariums';
+      else if (claim.category.includes('Discount') || claim.category.includes('Concession')) ledgerCategory = 'Discounts & Deductions';
+
+      await addTransaction({
+        type: 'expense',
+        category: ledgerCategory,
+        amount: claim.amount,
+        date: new Date().toISOString().slice(0, 10),
+        description: `Approved Claim: ${claim.description} [Ref: ${claim.projectRef}]`,
+        status: 'cleared',
+        paymentMethod: 'Petty Cash',
+        recordedBy: claim.submittedBy,
+      });
+
+      setApprovalClaims((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, pushedToExpenseLedger: true } : c))
+      );
+    }
+
+    addAuditLog(
+      status === 'approved' ? 'Claim Approved' : 'Claim Rejected',
+      'claim',
+      `Manager ${profile.displayName} marked claim ${id} (AED ${claim.amount}) as ${status.toUpperCase()}`,
+      id
+    );
+    return true;
+  };
+
+  const updateDepartmentBudgetCap = async (id: string, newCap: number): Promise<boolean> => {
+    setDepartmentBudgets((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, monthlyCap: newCap } : b))
+    );
+    addAuditLog('Budget Cap Adjusted', 'budget', `Department budget ${id} ceiling set to AED ${newCap.toLocaleString()}`, id);
+    return true;
+  };
+
+  const recordDisbursement = async (
+    data: Omit<DisbursementRecord, 'id' | 'processedAt'>
+  ): Promise<boolean> => {
+    const newId = `dsb-${Date.now()}`;
+    const newRecord: DisbursementRecord = {
+      ...data,
+      id: newId,
+      processedAt: new Date().toISOString(),
+    };
+    setDisbursements((prev) => [newRecord, ...prev]);
+
+    // Record corresponding expense transaction
+    const cat = data.type === 'Salary' ? 'Salaries & Site Payroll' : 'Daily Expenses & Petty Cash';
+    await addTransaction({
+      type: 'expense',
+      category: cat,
+      amount: data.amount,
+      date: new Date().toISOString().slice(0, 10),
+      description: `Disbursement (${data.type}) to ${data.recipientName} - ${data.referenceNote}`,
+      status: 'cleared',
+      paymentMethod: data.paymentMode,
+      recordedBy: data.processedBy,
+    });
+
+    addAuditLog('Staff Disbursement Processed', 'disbursement', `Disbursed AED ${data.amount} to ${data.recipientName} (${data.type})`, newId);
+    return true;
+  };
+
+  // Owner Suite: Sadaqah & Audit
+  const recordSadaqah = async (
+    data: Omit<SadaqahRecord, 'id' | 'createdAt'>
+  ): Promise<boolean> => {
+    const newId = `sdq-${Date.now()}`;
+    const newRecord: SadaqahRecord = {
+      ...data,
+      id: newId,
+      createdAt: new Date().toISOString(),
+    };
+    setSadaqahRecords((prev) => [newRecord, ...prev]);
+
+    await addTransaction({
+      type: 'expense',
+      category: 'Sadaqah & Charity',
+      amount: data.amount,
+      date: data.date,
+      description: `Corporate Sadaqah: ${data.beneficiary} - ${data.description}`,
+      status: 'cleared',
+      paymentMethod: 'Bank Transfer',
+      recordedBy: data.approvedBy,
+    });
+
+    addAuditLog('Sadaqah Welfare Granted', 'transaction', `Authorized AED ${data.amount} charity to ${data.beneficiary}`, newId);
+    return true;
+  };
+
+  // Worker & Field Staff
+  const addWorkerLog = async (data: Omit<WorkerSiteLog, 'id' | 'createdAt'>): Promise<boolean> => {
+    const newId = `wlog-${Date.now()}`;
+    const newLog: WorkerSiteLog = {
+      ...data,
+      id: newId,
+      createdAt: new Date().toISOString(),
+    };
+    setWorkerLogs((prev) => [newLog, ...prev]);
+    addAuditLog('Site Work Logged', 'transaction', `${data.workerName} logged ${data.hoursLogged}h at ${data.siteName}`, newId);
+    return true;
+  };
+
+  // Saudi Arabia & GCC Employee Records & Document Expiry Compliance
+  const addSaudiEmployee = async (
+    data: Omit<SaudiEmployeeRecord, 'id' | 'createdAt'>
+  ): Promise<boolean> => {
+    const newId = `emp-${Date.now()}`;
+    const newEmployee: SaudiEmployeeRecord = {
+      ...data,
+      id: newId,
+      createdAt: new Date().toISOString(),
+    };
+    setSaudiEmployees((prev) => [newEmployee, ...prev]);
+    addAuditLog(
+      'Employee Record Added',
+      'auth',
+      `Registered employee ${data.employeeName} (${data.employeeIdNumber}) with Iqama ${data.iqamaNumber}`,
+      newId
+    );
+    return true;
+  };
+
+  const updateSaudiEmployee = async (
+    id: string,
+    data: Partial<SaudiEmployeeRecord>
+  ): Promise<boolean> => {
+    setSaudiEmployees((prev) =>
+      prev.map((emp) => (emp.id === id ? { ...emp, ...data } : emp))
+    );
+    addAuditLog('Employee Record Updated', 'auth', `Updated official details for employee record ${id}`, id);
+    return true;
+  };
+
+  const removeSaudiEmployee = async (id: string): Promise<boolean> => {
+    setSaudiEmployees((prev) => prev.filter((emp) => emp.id !== id));
+    addAuditLog('Employee Record Removed', 'auth', `Removed employee compliance record ${id}`, id);
+    return true;
+  };
+
+  const renewEmployeeDocument = async (
+    employeeId: string,
+    docType: 'iqama' | 'passport' | 'qiwa' | 'insurance' | 'drivingLicense' | 'healthCert',
+    newExpiryDate: string
+  ): Promise<boolean> => {
+    setSaudiEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id !== employeeId) return emp;
+        if (docType === 'iqama') {
+          return { ...emp, iqamaExpiryGregorian: newExpiryDate };
+        } else if (docType === 'passport') {
+          return { ...emp, passportExpiryDate: newExpiryDate };
+        } else if (docType === 'qiwa') {
+          return { ...emp, qiwaContractEndDate: newExpiryDate, qiwaStatus: 'documented' };
+        } else if (docType === 'insurance') {
+          return { ...emp, insuranceExpiryDate: newExpiryDate };
+        } else if (docType === 'drivingLicense') {
+          return { ...emp, drivingLicenseExpiry: newExpiryDate };
+        } else if (docType === 'healthCert') {
+          return { ...emp, healthCertExpiry: newExpiryDate };
+        }
+        return emp;
+      })
+    );
+
+    const emp = saudiEmployees.find((e) => e.id === employeeId);
+    addAuditLog(
+      'Document Renewed',
+      'auth',
+      `Renewed ${docType.toUpperCase()} for ${emp?.employeeName || employeeId} to new date: ${newExpiryDate}`,
+      employeeId
+    );
+    return true;
+  };
+
   const resetToDemoData = () => {
     setTransactions(INITIAL_TRANSACTIONS);
     setGoal(INITIAL_GOAL);
     setTeamMembers(INITIAL_TEAM_MEMBERS);
+    setSalesContracts(INITIAL_SALES_CONTRACTS);
+    setClientGifts(INITIAL_CLIENT_GIFTS);
+    setApprovalClaims(INITIAL_APPROVAL_CLAIMS);
+    setDepartmentBudgets(INITIAL_DEPARTMENT_BUDGETS);
+    setDisbursements(INITIAL_DISBURSEMENTS);
+    setSadaqahRecords(INITIAL_SADAQAH_RECORDS);
+    setAuditLogs(INITIAL_AUDIT_LOGS);
+    setWorkerLogs(INITIAL_WORKER_LOGS);
+    setSaudiEmployees(INITIAL_SAUDI_EMPLOYEES);
     setLedgerModeState('real');
     localStorage.removeItem('vantage_transactions');
     localStorage.removeItem('vantage_goal');
     localStorage.removeItem('vantage_team');
+    localStorage.removeItem('sika_sales_contracts');
+    localStorage.removeItem('sika_client_gifts');
+    localStorage.removeItem('sika_approval_claims');
+    localStorage.removeItem('sika_dept_budgets');
+    localStorage.removeItem('sika_disbursements');
+    localStorage.removeItem('sika_sadaqah_records');
+    localStorage.removeItem('sika_audit_logs');
+    localStorage.removeItem('sika_worker_logs');
+    localStorage.removeItem('sika_saudi_employees');
     localStorage.setItem('vantage_ledger_mode', 'real');
   };
 
@@ -576,6 +1132,40 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
         clearTransactions,
         importTransactionsCsv,
         syncToCloudDatabase,
+
+        // Salesman Systems
+        salesContracts,
+        addSalesContract,
+        updateSalesContractStatus,
+        pushContractToRevenueLedger,
+        clientGifts,
+        addClientGift,
+
+        // Manager Operations & Approvals
+        approvalClaims,
+        submitApprovalClaim,
+        reviewApprovalClaim,
+        departmentBudgets,
+        updateDepartmentBudgetCap,
+        disbursements,
+        recordDisbursement,
+
+        // Owner Suite
+        sadaqahRecords,
+        recordSadaqah,
+        auditLogs,
+        addAuditLog,
+
+        // Worker & Field Staff
+        workerLogs,
+        addWorkerLog,
+
+        // Saudi Arabia & GCC Employee Records & Document Expiry Compliance
+        saudiEmployees,
+        addSaudiEmployee,
+        updateSaudiEmployee,
+        removeSaudiEmployee,
+        renewEmployeeDocument,
       }}
     >
       {children}

@@ -42,7 +42,7 @@ const DEFAULT_OWNER_PROFILE: UserProfile = {
   email: '786zahidhossen786@gmail.com',
   displayName: 'Zahid Hossen',
   role: 'founder',
-  businessName: 'SIKA GCC Commercial Solutions',
+  businessName: 'DCC TRADING CO',
   createdAt: '2026-01-01T00:00:00Z',
 };
 
@@ -52,7 +52,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: '786zahidhossen786@gmail.com',
     displayName: 'Zahid Hossen (Founder)',
     role: 'founder',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-01-01T00:00:00Z',
   },
   'co-founder': {
@@ -60,7 +60,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'tariq.cofounder@sika-gcc.com',
     displayName: 'Tariq Rahman (Co-Founder)',
     role: 'co-founder',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-01-15T00:00:00Z',
   },
   ceo: {
@@ -68,7 +68,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'amina.ceo@sika-gcc.com',
     displayName: 'Amina Al-Mansoor (CEO)',
     role: 'ceo',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-02-01T00:00:00Z',
   },
   director: {
@@ -76,7 +76,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'khalid.director@sika-gcc.com',
     displayName: 'Eng. Khalid Al-Sayed (Director)',
     role: 'director',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-02-15T00:00:00Z',
   },
   manager: {
@@ -84,7 +84,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'hassan.finance@sika-gcc.com',
     displayName: 'Hassan Reza (Operations & Finance)',
     role: 'manager',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-03-15T00:00:00Z',
   },
   salesman: {
@@ -92,7 +92,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'bilal.sales@sika-gcc.com',
     displayName: 'Bilal Karim (Salesman)',
     role: 'salesman',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-04-01T00:00:00Z',
   },
   worker: {
@@ -100,7 +100,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'faisal.worker@sika-gcc.com',
     displayName: 'Faisal Ahmed (Worker)',
     role: 'worker',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-04-15T00:00:00Z',
   },
   owner: {
@@ -108,7 +108,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: '786zahidhossen786@gmail.com',
     displayName: 'Zahid Hossen (Executive Owner)',
     role: 'owner',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-01-01T00:00:00Z',
   },
   analyst: {
@@ -116,7 +116,7 @@ export const DEMO_PROFILES: Record<UserRole, UserProfile> = {
     email: 'audit@sika-gcc.com',
     displayName: 'Financial Auditor (Analyst)',
     role: 'analyst',
-    businessName: 'SIKA GCC Commercial Solutions',
+    businessName: 'DCC TRADING CO',
     createdAt: '2026-05-10T00:00:00Z',
   },
 };
@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: user.email || 'user@sika-gcc.com',
           displayName: user.displayName || 'Authorized Member',
           role: isOwnerEmail ? 'founder' : 'manager',
-          businessName: 'SIKA GCC Commercial Solutions',
+          businessName: 'DCC TRADING CO',
           photoURL: user.photoURL || undefined,
           createdAt: new Date().toISOString(),
         });

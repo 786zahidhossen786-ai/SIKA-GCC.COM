@@ -14,6 +14,7 @@ import {
   Cloud,
   Lock,
   UserCheck,
+  Bot,
 } from 'lucide-react';
 import { generateTransactionsCsv, downloadCsvFile } from '../../utils/csv';
 import { ImportModal } from '../transactions/ImportModal';
@@ -21,9 +22,10 @@ import { ImportModal } from '../transactions/ImportModal';
 interface HeaderProps {
   onOpenAddModal: () => void;
   onOpenMobileMenu: () => void;
+  onOpenAiAdvisor?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu, onOpenAiAdvisor }) => {
   const {
     profile,
     role,
@@ -100,11 +102,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu
           </button>
           <div className="flex flex-col">
             <span className="text-sm sm:text-base font-bold tracking-tight text-white whitespace-nowrap">
-              SIKA GCC Financial
+              DCC TRADING CO
             </span>
             <span className="text-[10px] text-emerald-400 font-mono font-medium flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
-              {ledgerMode === 'real' ? 'Real SIKA GCC Ledger' : 'Clean Slate Ledger'}
+              {ledgerMode === 'real' ? 'Commercial Financial & Ops Suite' : 'Clean Slate Ledger'}
             </span>
           </div>
         </div>
@@ -141,6 +143,18 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal, onOpenMobileMenu
               ))}
             </select>
           </div>
+
+          {/* AI Advisor Button */}
+          {onOpenAiAdvisor && (
+            <button
+              onClick={onOpenAiAdvisor}
+              title="Open Account AI Financial Advisor"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-600/60 rounded-lg transition-all shadow-sm hover:shadow-emerald-900/20 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <Bot className="w-3.5 h-3.5 text-emerald-400" />
+              <span>AI Co-Pilot</span>
+            </button>
+          )}
 
           {/* Import Real Data Button */}
           <button
