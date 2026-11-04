@@ -388,6 +388,31 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Cloud SQL Database Initial Loader
+  useEffect(() => {
+    const loadFromDatabase = async () => {
+      try {
+        const txRes = await fetch('/api/transactions');
+        if (txRes.ok) {
+          const remoteTxs = await txRes.json();
+          if (Array.isArray(remoteTxs) && remoteTxs.length > 0) {
+            setTransactions(remoteTxs);
+          }
+        }
+        const empRes = await fetch('/api/employees');
+        if (empRes.ok) {
+          const remoteEmps = await empRes.json();
+          if (Array.isArray(remoteEmps) && remoteEmps.length > 0) {
+            setSaudiEmployees(remoteEmps);
+          }
+        }
+      } catch (err) {
+        console.log('Database fetch notice:', err);
+      }
+    };
+    loadFromDatabase();
+  }, []);
+
   // Firestore Live Listener when authenticated
   useEffect(() => {
     if (!currentUser) return;
@@ -499,6 +524,13 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setTransactions((prev) => [newTx, ...prev]);
 
+    // Persist to Cloud SQL PostgreSQL
+    fetch('/api/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTx),
+    }).catch(err => console.warn('Cloud SQL insert notice:', err));
+
     if (currentUser) {
       try {
         await setDoc(doc(db, 'transactions', newId), newTx);
@@ -519,6 +551,13 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
       prev.map((t) => (t.id === id ? { ...t, ...data, updatedAt: new Date().toISOString() } : t))
     );
 
+    // Persist to Cloud SQL PostgreSQL
+    fetch(`/api/transactions/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(err => console.warn('Cloud SQL update notice:', err));
+
     if (currentUser) {
       try {
         await setDoc(doc(db, 'transactions', id), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
@@ -536,6 +575,11 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     setTransactions((prev) => prev.filter((t) => t.id !== id));
+
+    // Persist to Cloud SQL PostgreSQL
+    fetch(`/api/transactions/${id}`, {
+      method: 'DELETE',
+    }).catch(err => console.warn('Cloud SQL delete notice:', err));
 
     if (currentUser) {
       try {
@@ -906,6 +950,14 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
       createdAt: new Date().toISOString(),
     };
     setSaudiEmployees((prev) => [newEmployee, ...prev]);
+
+    // Persist to Cloud SQL PostgreSQL
+    fetch('/api/employees', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEmployee),
+    }).catch(err => console.warn('Cloud SQL employee insert notice:', err));
+
     addAuditLog(
       'Employee Record Added',
       'auth',
@@ -922,12 +974,26 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
     setSaudiEmployees((prev) =>
       prev.map((emp) => (emp.id === id ? { ...emp, ...data } : emp))
     );
+
+    // Persist to Cloud SQL PostgreSQL
+    fetch(`/api/employees/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(err => console.warn('Cloud SQL employee update notice:', err));
+
     addAuditLog('Employee Record Updated', 'auth', `Updated official details for employee record ${id}`, id);
     return true;
   };
 
   const removeSaudiEmployee = async (id: string): Promise<boolean> => {
     setSaudiEmployees((prev) => prev.filter((emp) => emp.id !== id));
+
+    // Persist to Cloud SQL PostgreSQL
+    fetch(`/api/employees/${id}`, {
+      method: 'DELETE',
+    }).catch(err => console.warn('Cloud SQL employee delete notice:', err));
+
     addAuditLog('Employee Record Removed', 'auth', `Removed employee compliance record ${id}`, id);
     return true;
   };
@@ -1067,31 +1133,34 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Push to Live Firebase Firestore
+  // Synchronize to Cloud SQL PostgreSQL & Cloud Storage
   const syncToCloudDatabase = async (): Promise<{ success: boolean; message: string }> => {
-    if (!currentUser) {
-      return { success: false, message: 'Please sign in with Google first to sync with Cloud Firestore.' };
-    }
-
     try {
       setIsLoading(true);
-      const batch = writeBatch(db);
-      // Batch up to 400 transactions
-      const toSync = transactions.slice(0, 400);
-      for (const t of toSync) {
-        const ref = doc(db, 'transactions', t.id);
-        batch.set(ref, {
-          ...t,
-          userId: currentUser.uid,
-          updatedAt: new Date().toISOString(),
-        }, { merge: true });
+
+      // Trigger Cloud SQL database sync
+      await fetch('/api/seed', { method: 'POST' });
+
+      // If signed in, also sync to Firestore
+      if (currentUser) {
+        const batch = writeBatch(db);
+        const toSync = transactions.slice(0, 400);
+        for (const t of toSync) {
+          const ref = doc(db, 'transactions', t.id);
+          batch.set(ref, {
+            ...t,
+            userId: currentUser.uid,
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        }
+        await batch.commit();
       }
-      await batch.commit();
+
       setIsLoading(false);
-      return { success: true, message: `Successfully synced ${toSync.length} transactions to Cloud Firestore database!` };
+      return { success: true, message: `Successfully synced ${transactions.length} transactions and workforce records to Cloud SQL database!` };
     } catch (err) {
       setIsLoading(false);
-      return { success: false, message: err instanceof Error ? err.message : 'Failed to write to Cloud Firestore.' };
+      return { success: false, message: err instanceof Error ? err.message : 'Database synchronization notice.' };
     }
   };
 

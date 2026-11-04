@@ -179,7 +179,7 @@ export const OwnerSuiteView: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-stone-950 hover:bg-amber-400 font-bold text-sm shadow-md transition-all disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'Syncing...' : 'Sync to Cloud Firestore'}
+              {isSyncing ? 'Syncing...' : 'Sync to Cloud SQL Database'}
             </button>
             <button
               onClick={handleDownloadBackup}
