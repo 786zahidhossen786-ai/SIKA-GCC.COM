@@ -137,8 +137,8 @@ const FinancialDataContext = createContext<FinancialDataContextType | undefined>
 export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, profile, canAddTransaction, canEditTransaction, canDeleteTransaction, canManageTeam, canEditGoals } = useAuth();
   
-  // Cache versioning for SIKA GCC Real Business Data
-  const SIKA_VERSION_KEY = 'sika_gcc_production_v2';
+  // Cache versioning for DCC TRADING CO Real Zero State
+  const SIKA_VERSION_KEY = 'dcc_trading_real_zero_v3';
   const hasMigrated = typeof window !== 'undefined' && localStorage.getItem(SIKA_VERSION_KEY) === 'true';
 
   const [currency, setCurrencyState] = useState<SupportedCurrency>(() => {
@@ -152,11 +152,11 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [ledgerMode, setLedgerModeState] = useState<'real' | 'clean'>(() => {
     if (!hasMigrated) {
-      localStorage.setItem('vantage_ledger_mode', 'real');
-      return 'real';
+      localStorage.setItem('vantage_ledger_mode', 'clean');
+      return 'clean';
     }
     const saved = localStorage.getItem('vantage_ledger_mode') as 'real' | 'clean';
-    return saved || 'real';
+    return saved || 'clean';
   });
 
   const setCurrency = (c: SupportedCurrency) => {
@@ -167,11 +167,20 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     if (!hasMigrated) {
       localStorage.setItem(SIKA_VERSION_KEY, 'true');
-      localStorage.setItem('vantage_transactions', JSON.stringify(INITIAL_TRANSACTIONS));
+      localStorage.setItem('vantage_transactions', JSON.stringify([]));
       localStorage.setItem('vantage_team', JSON.stringify(INITIAL_TEAM_MEMBERS));
       localStorage.setItem('vantage_goal', JSON.stringify(INITIAL_GOAL));
-      localStorage.setItem('vantage_ledger_mode', 'real');
-      return INITIAL_TRANSACTIONS;
+      localStorage.setItem('vantage_ledger_mode', 'clean');
+      localStorage.setItem('sika_sales_contracts', JSON.stringify([]));
+      localStorage.setItem('sika_client_gifts', JSON.stringify([]));
+      localStorage.setItem('sika_approval_claims', JSON.stringify([]));
+      localStorage.setItem('sika_dept_budgets', JSON.stringify(INITIAL_DEPARTMENT_BUDGETS));
+      localStorage.setItem('sika_disbursements', JSON.stringify([]));
+      localStorage.setItem('sika_sadaqah_records', JSON.stringify([]));
+      localStorage.setItem('sika_audit_logs', JSON.stringify([]));
+      localStorage.setItem('sika_worker_logs', JSON.stringify([]));
+      localStorage.setItem('sika_saudi_employees', JSON.stringify([]));
+      return [];
     }
 
     const savedMode = localStorage.getItem('vantage_ledger_mode');
@@ -395,14 +404,14 @@ export const FinancialDataProvider: React.FC<{ children: React.ReactNode }> = ({
         const txRes = await fetch('/api/transactions');
         if (txRes.ok) {
           const remoteTxs = await txRes.json();
-          if (Array.isArray(remoteTxs) && remoteTxs.length > 0) {
+          if (Array.isArray(remoteTxs)) {
             setTransactions(remoteTxs);
           }
         }
         const empRes = await fetch('/api/employees');
         if (empRes.ok) {
           const remoteEmps = await empRes.json();
-          if (Array.isArray(remoteEmps) && remoteEmps.length > 0) {
+          if (Array.isArray(remoteEmps)) {
             setSaudiEmployees(remoteEmps);
           }
         }

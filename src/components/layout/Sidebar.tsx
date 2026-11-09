@@ -216,18 +216,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         </div>
       </div>
 
-      {/* Restore Demo Data & Company Wordmark */}
+      {/* Reset to Clean Zero State & Company Wordmark */}
       <div className="pt-2 border-t border-slate-800/80">
         <button
           onClick={() => {
-            if (confirm('Reset transactions, contracts, claims, and Saudi employee records to default demonstration state?')) {
+            if (confirm('Reset all transactions, contracts, claims, and financial figures to clean zero state?')) {
               resetToDemoData();
             }
           }}
           className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-[11px] font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 rounded-lg transition-colors border border-slate-800/80 cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-          <span>Restore Demo Data</span>
+          <span>Reset to Zero State (Clean)</span>
         </button>
         <div className="mt-2 text-center text-[10px] text-slate-600 font-medium">
           DCC TRADING CO • Enterprise Suite

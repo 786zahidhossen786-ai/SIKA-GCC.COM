@@ -175,10 +175,28 @@ export async function seedDatabase() {
       }).onConflictDoNothing();
     }
 
-    console.log('Database successfully seeded with DCC TRADING CO initial records.');
+    console.log('Database initialized with DCC TRADING CO zero state.');
     return true;
   } catch (error) {
     console.error('Error seeding database:', error);
     return false;
   }
 }
+
+export async function clearDatabase() {
+  try {
+    await db.delete(transactions);
+    await db.delete(saudiEmployees);
+    await db.delete(salesContracts);
+    await db.delete(approvalClaims);
+    await db.delete(workerSiteLogs);
+    await db.delete(sadaqahRecords);
+    await db.delete(auditLogs);
+    console.log('All DCC TRADING CO tables cleared to zero state.');
+    return true;
+  } catch (error) {
+    console.error('Error clearing database:', error);
+    return false;
+  }
+}
+

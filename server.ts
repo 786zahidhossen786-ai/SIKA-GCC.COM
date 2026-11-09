@@ -26,9 +26,10 @@ import {
   getAllAuditLogs,
   insertAuditLog
 } from './src/db/queries.ts';
-import { seedDatabase } from './src/db/seed.ts';
+import { seedDatabase, clearDatabase } from './src/db/seed.ts';
 
 dotenv.config();
+process.env.DISABLE_HMR = 'true';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -243,23 +244,32 @@ app.post('/api/audit-logs', async (req, res) => {
   }
 });
 
-// Seed API endpoint
+// Seed / Reset API endpoints
 app.post('/api/seed', async (req, res) => {
   try {
     const ok = await seedDatabase();
-    res.json({ success: ok, message: 'Database populated with initial DCC TRADING CO records.' });
+    res.json({ success: ok, message: 'Database initialized for DCC TRADING CO.' });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Failed to seed database' });
+    res.status(500).json({ error: error.message || 'Failed to initialize database' });
+  }
+});
+
+app.post('/api/reset', async (req, res) => {
+  try {
+    const ok = await clearDatabase();
+    res.json({ success: ok, message: 'All database records reset to zero state.' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to clear database' });
   }
 });
 
 // Start server with Vite middleware in dev or static files in production
 async function startServer() {
-  // Pre-seed initial database state if needed
+  // Ensure basic user record exists without populating mock data
   try {
     await seedDatabase();
   } catch (err) {
-    console.warn('Initial seed deferred:', err);
+    console.warn('Initial setup check:', err);
   }
 
   if (process.env.NODE_ENV === 'production') {
@@ -270,7 +280,10 @@ async function startServer() {
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);

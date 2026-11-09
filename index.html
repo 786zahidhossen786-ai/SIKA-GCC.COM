@@ -12,6 +12,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Gracefully prevent unhandled rejections from Vite dev WebSocket disconnection in cloud iframe preview
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event && event.reason && (
+          String(event.reason.message || event.reason).includes('WebSocket') ||
+          String(event.reason.message || event.reason).includes('ws://') ||
+          String(event.reason.message || event.reason).includes('wss://')
+        )) {
+          event.preventDefault();
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

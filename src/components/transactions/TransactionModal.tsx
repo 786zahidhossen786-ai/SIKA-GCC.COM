@@ -252,7 +252,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-750 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
               >
-                {TRANSACTION_CATEGORIES[type].map((cat) => (
+                {TRANSACTION_CATEGORIES[type].map((cat: string) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
